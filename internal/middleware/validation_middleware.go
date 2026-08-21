@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"devices-api-go/internal/domain"
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -10,8 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"devices-api-go/model"
-	"devices-api-go/repository"
+	"devices-api-go/internal/repository"
 )
 
 type ValidationMiddleware struct {
@@ -48,8 +48,8 @@ func (m *ValidationMiddleware) GuardDeviceRules() gin.HandlerFunc {
 
 		// Rule 1: In use devices cannot be deleted.
 		if method == http.MethodDelete {
-			if existing.State == model.InUse {
-				_ = c.Error(errors.New(model.ErrDeviceInUseDelete))
+			if existing.State == domain.InUse {
+				_ = c.Error(errors.New(domain.ErrDeviceInUseDelete))
 				c.Abort()
 				return
 			}
@@ -70,19 +70,19 @@ func (m *ValidationMiddleware) GuardDeviceRules() gin.HandlerFunc {
 
 			// Rule 2: Creation time cannot be updated.
 			if _, exists := payload["creationTime"]; exists {
-				_ = c.Error(errors.New(model.ErrCreationTimeImmutable))
+				_ = c.Error(errors.New(domain.ErrCreationTimeImmutable))
 				c.Abort()
 				return
 			}
 
 			// Rule 3: Name and brand properties cannot be updated if the device is in use.
-			if existing.State == model.InUse {
+			if existing.State == domain.InUse {
 				if method == http.MethodPut {
 					newName, _ := payload["name"].(string)
 					newBrand, _ := payload["brand"].(string)
 
 					if !strings.EqualFold(existing.Name, newName) || !strings.EqualFold(existing.Brand, newBrand) {
-						_ = c.Error(errors.New(model.ErrDeviceInUseLocked))
+						_ = c.Error(errors.New(domain.ErrDeviceInUseLocked))
 						c.Abort()
 						return
 					}
@@ -91,7 +91,7 @@ func (m *ValidationMiddleware) GuardDeviceRules() gin.HandlerFunc {
 					_, brandExists := payload["brand"]
 
 					if nameExists || brandExists {
-						_ = c.Error(errors.New(model.ErrDeviceInUseLocked))
+						_ = c.Error(errors.New(domain.ErrDeviceInUseLocked))
 						c.Abort()
 						return
 					}

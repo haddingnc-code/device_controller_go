@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/devices": {
             "get": {
-                "description": "Retrieves a paginated chunk of devices using page and size query parameters.",
+                "description": "Retrieves a high-performance chunk of devices starting after a target cursor ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,18 +27,18 @@ const docTemplate = `{
                 "tags": [
                     "Devices API"
                 ],
-                "summary": "Fetch all devices with efficient pagination",
+                "summary": "Fetch all devices with cursor pagination",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page number (default 0)",
-                        "name": "page",
+                        "description": "Max items to return (default 20)",
+                        "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Page size (default 20)",
-                        "name": "size",
+                        "description": "ID of the last item from the previous page (default 0)",
+                        "name": "cursor",
                         "in": "query"
                     }
                 ],
@@ -46,10 +46,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Device"
-                            }
+                            "$ref": "#/definitions/model.CursorPageResult"
                         }
                     },
                     "500": {
@@ -440,6 +437,23 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "model.CursorPageResult": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Device"
+                    }
+                },
+                "hasNext": {
+                    "type": "boolean"
+                },
+                "nextCursor": {
+                    "type": "integer"
                 }
             }
         },

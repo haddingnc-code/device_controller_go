@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"devices-api-go/model"
+	"devices-api-go/internal/domain"
 )
 
-// GlobalErrorHandler returns a Gin middleware that intercepts errors attached to the request context.
+// GlobalErrorHandler returns a Gin internal.middleware that intercepts errors attached to the request context.
 // It acts exactly like Spring Boot's @RestControllerAdvice to centralize error serialization.
 func GlobalErrorHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -23,9 +23,9 @@ func GlobalErrorHandler() gin.HandlerFunc {
 			message := err.Error()
 
 			// Check our evaluation text rules to assign the correct 400 Bad Request status
-			if message == model.ErrCreationTimeImmutable ||
-				message == model.ErrDeviceInUseLocked ||
-				message == model.ErrDeviceInUseDelete {
+			if message == domain.ErrCreationTimeImmutable ||
+				message == domain.ErrDeviceInUseLocked ||
+				message == domain.ErrDeviceInUseDelete {
 				status = http.StatusBadRequest
 			} else if message == "Device not found" {
 				status = http.StatusNotFound
@@ -39,7 +39,7 @@ func GlobalErrorHandler() gin.HandlerFunc {
 				message = "Validation failed for one or more fields. Check required parameters."
 			}
 
-			c.JSON(status, model.ApiError{
+			c.JSON(status, domain.ApiError{
 				Timestamp: time.Now(),
 				Status:    status,
 				Error:     http.StatusText(status),

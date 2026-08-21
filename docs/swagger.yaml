@@ -10,6 +10,17 @@ definitions:
       timestamp:
         type: string
     type: object
+  model.CursorPageResult:
+    properties:
+      content:
+        items:
+          $ref: '#/definitions/model.Device'
+        type: array
+      hasNext:
+        type: boolean
+      nextCursor:
+        type: integer
+    type: object
   model.Device:
     properties:
       brand:
@@ -53,16 +64,16 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves a paginated chunk of devices using page and size query
-        parameters.
+      description: Retrieves a high-performance chunk of devices starting after a
+        target cursor ID.
       parameters:
-      - description: Page number (default 0)
+      - description: Max items to return (default 20)
         in: query
-        name: page
+        name: limit
         type: integer
-      - description: Page size (default 20)
+      - description: ID of the last item from the previous page (default 0)
         in: query
-        name: size
+        name: cursor
         type: integer
       produces:
       - application/json
@@ -70,14 +81,12 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Device'
-            type: array
+            $ref: '#/definitions/model.CursorPageResult'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiError'
-      summary: Fetch all devices with efficient pagination
+      summary: Fetch all devices with cursor pagination
       tags:
       - Devices API
     post:
