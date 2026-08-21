@@ -1,6 +1,6 @@
 # Devices Management REST API (Golang Version)
 
-A high-performance microservice designed in Go 1.23+ for managing device lifecycles and operational states. This project decouples business rule restrictions from core data access layers using idiomatic HTTP Middlewares, matching the enterprise standards previously established in the Java Spring iteration.
+A high-performance microservice designed in Go 1.23+ for managing device lifecycles and operational states. This project decouples business rule restrictions from core data access layers using an idiomatic Aspect-Oriented Programming (AOP) Decorator pattern at the service layer, matching the enterprise standards previously established in the Java Spring iteration.
 
 ---
 
@@ -10,32 +10,36 @@ A high-performance microservice designed in Go 1.23+ for managing device lifecyc
 - **Pagination:** High-performance Cursor-Based Pagination matching 1GLOBAL scale standards.
 - **Web Framework:** [Gin Gonic](https://github.com) (High-performance routing triage engine).
 - **Database Driver:** [pgx/v5](https://github.com) (Native PostgreSQL connection pool handling with zero reflection overhead).
-- **Database Engine:** PostgreSQL 15 (Relational persistent storage).
+- **Database Engine:** PostgreSQL 16 (Relational persistent storage).
 - **Documentation:** [swag](https://github.com) (Automatic OpenAPI 3.0 specification generator via code comments).
-- **Testing Toolkit:** [testify/suite](https://github.com) & [testcontainers-go](https://github.com) (Advanced database integration testing).
+- **Testing Toolkit:** [testify/suite](https://github.com) (Advanced behavioral assertion testing).
 
 ---
 
 ## 📐 Project Architecture Layout
 
-The codebase strictly adheres to a clean, decoupled layer separation mapping architecture:
+The codebase strictly adheres to a clean, decoupled layer separation mapping architecture matching Clean Architecture standards:
 
 ```text
 devices-api-go/
+├── cmd/
+│   └── api/      # Application entrypoint (main.go)
 ├── config/       # Database connection pool allocation and initialization
-├── controller/   # REST API endpoint multiplexing handlers and test scenarios
 ├── docs/         # Automatically compiled Swagger OpenAPI static definitions
-├── internal.middleware/   # Centralized HTTP interceptors (Centralized error handler & business rules)
-├── model/        # Entities, custom types (pseudo-enums), and DTO schemas
-└── repository/   # Raw SQL statements with efficient offset pagination handling
+└── internal/     # Private application layers
+    ├── domain/   # Entities, custom types (pseudo-enums), DTO schemas, and Interfaces
+    ├── handler/  # REST API HTTP controller handlers (DeviceController)
+    ├── middleware/ # Global error mapping interceptors
+    ├── repository/ # Database persistence layer (DeviceRepository implementation)
+    └── service/  # Core business services and the AOP aspect decorator proxy
 ```
 
 ---
 
-## 🔒 Implemented Business Safeguards
+## 🔒 Implemented Business Safeguards (AOP Layer)
 
-The HTTP Middleware layer dynamically intercepts modification inputs before they ever propagate down to the persistence service tier, enforcing strict evaluation text rules:
-1. **Creation Time Constraint:** Returns `400 Bad Request` with the text `"Creation time cannot be updated."` if the client attempts to alter immutable metadata timestamps via PATCH operations.
+The core business rule validation is fully encapsulated inside a generic service-level **AOP Aspect Proxy Decorator** (`DeviceServiceAspect`). It dynamically intercepts modification inputs before they ever propagate down to the persistence service tier, enforcing strict evaluation text rules:
+1. **Creation Time Constraint:** Returns `400 Bad Request` with the text `"Creation time cannot be updated."` if the client attempts to alter immutable metadata timestamps via PUT/PATCH operations.
 2. **Resource Elimination Safeguard:** Returns `400 Bad Request` with the text `"In use devices cannot be deleted."` if an HTTP DELETE target is currently associated with an `IN_USE` operational state.
 3. **Property Modification Lock:** Returns `400 Bad Request` with the text `"Name and brand properties cannot be updated if the device is in use."` if a client tries to modify the `name` or `brand` attributes of an actively running asset.
 
@@ -51,11 +55,11 @@ docker compose up --build -d
 
 Once the containers shift into a running state:
 - The REST API will accept live traffic on port `8080`.
-- The PostgreSQL cluster will map safely to host port `5432`.
+- The PostgreSQL cluster will map safely to local host port `5433` (preventing local conflicts with default port 5432).
 
 To gracefully terminate the execution environment cluster, run:
 ```bash
-docker compose down
+docker compose down --volumes
 ```
 
 ---
@@ -71,8 +75,8 @@ When the application environment is online via Docker, you can inspect and inter
 ## 🧪 Running Automated Tests
 
 The testing suite simulates full context lifecycles to guarantee the validation shields are sound:
-- **Controller Pack:** Validates HTTP router state flows, validation tags, and global error internal.middleware handling.
-- **Repository Pack (Advanced Integration):** Utilizes **`testcontainers-go`** to dynamically spin up a true, transient sandboxed PostgreSQL container instance inside Docker at runtime to validate live infrastructure database compliance metrics.
+- **Service & AOP Aspect Pack:** Validates core domain logic execution boundaries and validation rules using decoupled mock interface repositories.
+- **Handler/HTTP Pack:** Simulates network requests and captures JSON payloads, testing global error mapping behaviors.
 
 To execute all integration scenarios and inspect outcomes across all packages, trigger the native testing engine via your terminal console:
 
@@ -86,5 +90,5 @@ go test -v ./...
 
 Per the structural roadmap of this microservice, the following items outline the architectural enhancements and future scalability improvements:
 
-1. **Database Migrations Engine**: Database schemas are currently handled natively. Integrating a tool like `golang-migrate` or `Liquibase` would allow structural version tracking directly inside the repository pipeline.
-2. **Structured Context Logging & Metrics**: Replacing the standard `log` package with a structured JSON logger like `uber-go/zap` or Go's native `slog` would improve log parsing. Exposing a `/metrics` endpoint via Prometheus would enable real-time dashboard observability.
+1. **Database Migrations Engine**: Database schemas are currently handled natively via container initialization scripts. Integrating a tool like `golang-migrate` would allow structural version tracking directly inside the repository pipeline.
+2. **Structured Context Logging & Metrics**: Replacing the standard `log` package with a structured JSON logger like Go's native `slog` would improve log parsing. Exposing a `/metrics` endpoint via Prometheus would enable real-time dashboard observability.
