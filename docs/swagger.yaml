@@ -1,0 +1,330 @@
+definitions:
+  model.ApiError:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      status:
+        type: integer
+      timestamp:
+        type: string
+    type: object
+  model.Device:
+    properties:
+      brand:
+        type: string
+      creationTime:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      state:
+        $ref: '#/definitions/model.DeviceState'
+    type: object
+  model.DeviceDTO:
+    properties:
+      brand:
+        type: string
+      name:
+        type: string
+      state:
+        $ref: '#/definitions/model.DeviceState'
+    required:
+    - brand
+    - name
+    - state
+    type: object
+  model.DeviceState:
+    enum:
+    - AVAILABLE
+    - IN_USE
+    - INACTIVE
+    type: string
+    x-enum-varnames:
+    - Available
+    - InUse
+    - Inactive
+info:
+  contact: {}
+paths:
+  /devices:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated chunk of devices using page and size query
+        parameters.
+      parameters:
+      - description: Page number (default 0)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 20)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Device'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Fetch all devices with efficient pagination
+      tags:
+      - Devices API
+    post:
+      consumes:
+      - application/json
+      description: Persists a device into the database with an automatic creation
+        time.
+      parameters:
+      - description: Device Input Payload Data
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/model.DeviceDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Device'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Create a new device
+      tags:
+      - Devices API
+  /devices/{id}:
+    delete:
+      description: Permanently removes a specific device matching the path identifier
+        key. Protected by active state guards.
+      parameters:
+      - description: ID of the target device to delete
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "24":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Delete a single device
+      tags:
+      - Devices API
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a specific device resource matching the unique path variable
+        identifier.
+      parameters:
+      - description: ID of the target device to find
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Device'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Fetch a single device by ID
+      tags:
+      - Devices API
+    patch:
+      consumes:
+      - application/json
+      description: Modifies specific payload key-value fields. Protected by active
+        state guards.
+      parameters:
+      - description: ID of the target device
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Key-value properties map to update
+        in: body
+        name: updates
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Device'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Partially update an existing device
+      tags:
+      - Devices API
+    put:
+      consumes:
+      - application/json
+      description: Replaces all fields of an existing device record. Protected by
+        active state guards.
+      parameters:
+      - description: ID of the target device
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Complete new state data payload
+        in: body
+        name: device
+        required: true
+        schema:
+          $ref: '#/definitions/model.DeviceDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Device'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Fully update an existing device
+      tags:
+      - Devices API
+  /devices/search/brand:
+    get:
+      consumes:
+      - application/json
+      description: Filters the device collection case-insensitively by brand matching
+        text.
+      parameters:
+      - description: Name of the device brand
+        in: query
+        name: brand
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Device'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Fetch devices by brand with pagination
+      tags:
+      - Devices API
+  /devices/search/state:
+    get:
+      consumes:
+      - application/json
+      description: Filters the device collection matching the target state enum value.
+      parameters:
+      - description: Target state (AVAILABLE, IN_USE, INACTIVE)
+        in: query
+        name: state
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Device'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiError'
+      summary: Fetch devices by state with pagination
+      tags:
+      - Devices API
+swagger: "2.0"
