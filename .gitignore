@@ -1,0 +1,21 @@
+# JetBrains/IntelliJ IDE configuration files
+.idea/
+*.iwb
+*.iml
+out/
+
+# Go compile binary outputs and tools cache
+/main
+/main.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.prof
+
+# Operating System temporary files
+Thumbs.db
+Desktop.ini
+.DS_Store
