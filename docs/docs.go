@@ -17,27 +17,25 @@ const docTemplate = `{
     "paths": {
         "/devices": {
             "get": {
-                "description": "Retrieves a high-performance chunk of devices starting after a target cursor ID.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Retrieves a list of all existing devices with cursor-based pagination.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
-                "summary": "Fetch all devices with cursor pagination",
+                "summary": "Fetch all devices",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Max items to return (default 20)",
+                        "description": "Pagination Limit",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "ID of the last item from the previous page (default 0)",
+                        "format": "int64",
+                        "description": "Pagination Cursor ID",
                         "name": "cursor",
                         "in": "query"
                     }
@@ -46,19 +44,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.CursorPageResult"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.CursorPageResult"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Persists a device into the database with an automatic creation time.",
+                "description": "Persists a new device resource into the database.",
                 "consumes": [
                     "application/json"
                 ],
@@ -66,17 +58,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
                 "summary": "Create a new device",
                 "parameters": [
                     {
-                        "description": "Device Input Payload Data",
+                        "description": "Device Payload",
                         "name": "device",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.DeviceDTO"
+                            "$ref": "#/definitions/domain.DeviceDTO"
                         }
                     }
                 ],
@@ -84,19 +76,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.Device"
+                            "$ref": "#/definitions/domain.Device"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     }
                 }
@@ -104,7 +90,7 @@ const docTemplate = `{
         },
         "/devices/search/brand": {
             "get": {
-                "description": "Filters the device collection case-insensitively by brand matching text.",
+                "description": "Filters the device collection case-insensitively by brand starting after a target cursor ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -112,9 +98,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
-                "summary": "Fetch devices by brand with pagination",
+                "summary": "Fetch devices by brand with cursor pagination",
                 "parameters": [
                     {
                         "type": "string",
@@ -125,14 +111,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
+                        "description": "Max items to return (default 20)",
+                        "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Page size",
-                        "name": "size",
+                        "format": "int64",
+                        "description": "ID of the last item from the previous page (default 0)",
+                        "name": "cursor",
                         "in": "query"
                     }
                 ],
@@ -140,22 +127,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Device"
-                            }
+                            "$ref": "#/definitions/domain.CursorPageResult"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     }
                 }
@@ -163,7 +147,7 @@ const docTemplate = `{
         },
         "/devices/search/state": {
             "get": {
-                "description": "Filters the device collection matching the target state enum value.",
+                "description": "Filters the device collection matching the target state enum starting after a target cursor ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -171,9 +155,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
-                "summary": "Fetch devices by state with pagination",
+                "summary": "Fetch devices by state with cursor pagination",
                 "parameters": [
                     {
                         "type": "string",
@@ -184,14 +168,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
+                        "description": "Max items to return (default 20)",
+                        "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Page size",
-                        "name": "size",
+                        "format": "int64",
+                        "description": "ID of the last item from the previous page (default 0)",
+                        "name": "cursor",
                         "in": "query"
                     }
                 ],
@@ -199,22 +184,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Device"
-                            }
+                            "$ref": "#/definitions/domain.CursorPageResult"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     }
                 }
@@ -230,12 +212,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
                 "summary": "Fetch a single device by ID",
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "ID of the target device to find",
                         "name": "id",
                         "in": "path",
@@ -246,25 +229,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Device"
+                            "$ref": "#/definitions/domain.Device"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     }
                 }
             },
             "put": {
-                "description": "Replaces all fields of an existing device record. Protected by active state guards.",
+                "description": "Updates all properties of a device. Protected by AOP state rules.",
                 "consumes": [
                     "application/json"
                 ],
@@ -272,24 +255,25 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
                 "summary": "Fully update an existing device",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID of the target device",
+                        "format": "int64",
+                        "description": "Device ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Complete new state data payload",
+                        "description": "Device Payload",
                         "name": "device",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.DeviceDTO"
+                            "$ref": "#/definitions/domain.DeviceDTO"
                         }
                     }
                 ],
@@ -297,46 +281,38 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Device"
+                            "$ref": "#/definitions/domain.Device"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     }
                 }
             },
             "delete": {
-                "description": "Permanently removes a specific device matching the path identifier key. Protected by active state guards.",
+                "description": "Removes a device resource by ID. Fails if the device is currently IN_USE.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
                 "summary": "Delete a single device",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID of the target device to delete",
+                        "format": "int64",
+                        "description": "Device ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "24": {
+                    "204": {
                         "description": "No Content",
                         "schema": {
                             "type": "string"
@@ -345,19 +321,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     }
                 }
@@ -371,12 +335,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Devices API"
+                    "devices"
                 ],
                 "summary": "Partially update an existing device",
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "ID of the target device",
                         "name": "id",
                         "in": "path",
@@ -397,25 +362,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Device"
+                            "$ref": "#/definitions/domain.Device"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiError"
+                            "$ref": "#/definitions/domain.ApiError"
                         }
                     }
                 }
@@ -423,7 +388,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "model.ApiError": {
+        "domain.ApiError": {
             "type": "object",
             "properties": {
                 "error": {
@@ -440,13 +405,13 @@ const docTemplate = `{
                 }
             }
         },
-        "model.CursorPageResult": {
+        "domain.CursorPageResult": {
             "type": "object",
             "properties": {
                 "content": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Device"
+                        "$ref": "#/definitions/domain.Device"
                     }
                 },
                 "hasNext": {
@@ -457,7 +422,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Device": {
+        "domain.Device": {
             "type": "object",
             "properties": {
                 "brand": {
@@ -473,11 +438,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "state": {
-                    "$ref": "#/definitions/model.DeviceState"
+                    "$ref": "#/definitions/domain.DeviceState"
                 }
             }
         },
-        "model.DeviceDTO": {
+        "domain.DeviceDTO": {
             "type": "object",
             "required": [
                 "brand",
@@ -492,11 +457,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "state": {
-                    "$ref": "#/definitions/model.DeviceState"
+                    "$ref": "#/definitions/domain.DeviceState"
                 }
             }
         },
-        "model.DeviceState": {
+        "domain.DeviceState": {
             "type": "string",
             "enum": [
                 "AVAILABLE",
@@ -514,12 +479,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Devices API",
+	Description:      "A REST API for persisting and managing device resources protected by AOP validation rules.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -1,21 +1,24 @@
-# JetBrains/IntelliJ IDE configuration files
-.idea/
-*.iwb
-*.iml
-out/
-
-# Go compile binary outputs and tools cache
-/main
-/main.exe
+# Binaries and executable files
+/cmd/api/devices-api
+/devices-api
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-*.test
-*.prof
 
-# Operating System temporary files
-Thumbs.db
-Desktop.ini
+# IDE specific metadata folders
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating system files
 .DS_Store
+Thumbs.db
+
+# Docker persistence volume artifacts
+pgdata/

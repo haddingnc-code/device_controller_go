@@ -1,31 +1,52 @@
 version: '3.8'
 
 services:
-  db-go:
-    image: postgres:15-alpine
-    container_name: devices-db-go
+  # Serviço da Base de Dados PostgreSQL
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: devices_postgres_db
     environment:
-      POSTGRES_DB: devices_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: devices_db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_go_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - devices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d devices_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  api-go:
-    build: .
-    container_name: devices-api-golang-app
+  # Serviço da tua API em Go
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devices_go_api
     ports:
       - "8080:8080"
-    depends_on:
-      - db-go
     environment:
-      DB_HOST: db-go
+      # Configurações que o teu pacote 'config.ConnectDatabase()' vai ler
+      DB_HOST: postgres-db
       DB_PORT: 5432
       DB_USER: postgres
-      DB_PASSWORD: postgres
+      DB_PASSWORD: mysecretpassword
       DB_NAME: devices_db
+      GIN_MODE: release
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - devices-network
+
+networks:
+  devices-network:
+    driver: bridge
 
 volumes:
-  postgres_go_data:
+  pgdata:
+    driver: local

@@ -10,6 +10,11 @@ import (
 	"log"
 )
 
+// @title           Devices API
+// @version         1.0
+// @description     A REST API for persisting and managing device resources protected by AOP validation rules.
+// @host            localhost:8080
+// @BasePath        /api/v1
 func main() {
 	// 1. Initialize the PostgreSQL connection pool
 	config.ConnectDatabase()

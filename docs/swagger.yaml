@@ -1,5 +1,6 @@
+basePath: /api/v1
 definitions:
-  model.ApiError:
+  domain.ApiError:
     properties:
       error:
         type: string
@@ -10,18 +11,18 @@ definitions:
       timestamp:
         type: string
     type: object
-  model.CursorPageResult:
+  domain.CursorPageResult:
     properties:
       content:
         items:
-          $ref: '#/definitions/model.Device'
+          $ref: '#/definitions/domain.Device'
         type: array
       hasNext:
         type: boolean
       nextCursor:
         type: integer
     type: object
-  model.Device:
+  domain.Device:
     properties:
       brand:
         type: string
@@ -32,22 +33,22 @@ definitions:
       name:
         type: string
       state:
-        $ref: '#/definitions/model.DeviceState'
+        $ref: '#/definitions/domain.DeviceState'
     type: object
-  model.DeviceDTO:
+  domain.DeviceDTO:
     properties:
       brand:
         type: string
       name:
         type: string
       state:
-        $ref: '#/definitions/model.DeviceState'
+        $ref: '#/definitions/domain.DeviceState'
     required:
     - brand
     - name
     - state
     type: object
-  model.DeviceState:
+  domain.DeviceState:
     enum:
     - AVAILABLE
     - IN_USE
@@ -57,21 +58,24 @@ definitions:
     - Available
     - InUse
     - Inactive
+host: localhost:8080
 info:
   contact: {}
+  description: A REST API for persisting and managing device resources protected by
+    AOP validation rules.
+  title: Devices API
+  version: "1.0"
 paths:
   /devices:
     get:
-      consumes:
-      - application/json
-      description: Retrieves a high-performance chunk of devices starting after a
-        target cursor ID.
+      description: Retrieves a list of all existing devices with cursor-based pagination.
       parameters:
-      - description: Max items to return (default 20)
+      - description: Pagination Limit
         in: query
         name: limit
         type: integer
-      - description: ID of the last item from the previous page (default 0)
+      - description: Pagination Cursor ID
+        format: int64
         in: query
         name: cursor
         type: integer
@@ -81,74 +85,60 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.CursorPageResult'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ApiError'
-      summary: Fetch all devices with cursor pagination
+            $ref: '#/definitions/domain.CursorPageResult'
+      summary: Fetch all devices
       tags:
-      - Devices API
+      - devices
     post:
       consumes:
       - application/json
-      description: Persists a device into the database with an automatic creation
-        time.
+      description: Persists a new device resource into the database.
       parameters:
-      - description: Device Input Payload Data
+      - description: Device Payload
         in: body
         name: device
         required: true
         schema:
-          $ref: '#/definitions/model.DeviceDTO'
+          $ref: '#/definitions/domain.DeviceDTO'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/model.Device'
+            $ref: '#/definitions/domain.Device'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/model.ApiError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
       summary: Create a new device
       tags:
-      - Devices API
+      - devices
   /devices/{id}:
     delete:
-      description: Permanently removes a specific device matching the path identifier
-        key. Protected by active state guards.
+      description: Removes a device resource by ID. Fails if the device is currently
+        IN_USE.
       parameters:
-      - description: ID of the target device to delete
+      - description: Device ID
+        format: int64
         in: path
         name: id
         required: true
         type: integer
+      produces:
+      - application/json
       responses:
-        "24":
+        "204":
           description: No Content
           schema:
             type: string
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/model.ApiError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.ApiError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
       summary: Delete a single device
       tags:
-      - Devices API
+      - devices
     get:
       consumes:
       - application/json
@@ -156,6 +146,7 @@ paths:
         identifier.
       parameters:
       - description: ID of the target device to find
+        format: int64
         in: path
         name: id
         required: true
@@ -166,18 +157,18 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Device'
+            $ref: '#/definitions/domain.Device'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
       summary: Fetch a single device by ID
       tags:
-      - Devices API
+      - devices
     patch:
       consumes:
       - application/json
@@ -185,6 +176,7 @@ paths:
         state guards.
       parameters:
       - description: ID of the target device
+        format: int64
         in: path
         name: id
         required: true
@@ -202,80 +194,73 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Device'
+            $ref: '#/definitions/domain.Device'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
       summary: Partially update an existing device
       tags:
-      - Devices API
+      - devices
     put:
       consumes:
       - application/json
-      description: Replaces all fields of an existing device record. Protected by
-        active state guards.
+      description: Updates all properties of a device. Protected by AOP state rules.
       parameters:
-      - description: ID of the target device
+      - description: Device ID
+        format: int64
         in: path
         name: id
         required: true
         type: integer
-      - description: Complete new state data payload
+      - description: Device Payload
         in: body
         name: device
         required: true
         schema:
-          $ref: '#/definitions/model.DeviceDTO'
+          $ref: '#/definitions/domain.DeviceDTO'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Device'
+            $ref: '#/definitions/domain.Device'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/model.ApiError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.ApiError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
       summary: Fully update an existing device
       tags:
-      - Devices API
+      - devices
   /devices/search/brand:
     get:
       consumes:
       - application/json
-      description: Filters the device collection case-insensitively by brand matching
-        text.
+      description: Filters the device collection case-insensitively by brand starting
+        after a target cursor ID.
       parameters:
       - description: Name of the device brand
         in: query
         name: brand
         required: true
         type: string
-      - description: Page number
+      - description: Max items to return (default 20)
         in: query
-        name: page
+        name: limit
         type: integer
-      - description: Page size
+      - description: ID of the last item from the previous page (default 0)
+        format: int64
         in: query
-        name: size
+        name: cursor
         type: integer
       produces:
       - application/json
@@ -283,38 +268,38 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Device'
-            type: array
+            $ref: '#/definitions/domain.CursorPageResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/model.ApiError'
-      summary: Fetch devices by brand with pagination
+            $ref: '#/definitions/domain.ApiError'
+      summary: Fetch devices by brand with cursor pagination
       tags:
-      - Devices API
+      - devices
   /devices/search/state:
     get:
       consumes:
       - application/json
-      description: Filters the device collection matching the target state enum value.
+      description: Filters the device collection matching the target state enum starting
+        after a target cursor ID.
       parameters:
       - description: Target state (AVAILABLE, IN_USE, INACTIVE)
         in: query
         name: state
         required: true
         type: string
-      - description: Page number
+      - description: Max items to return (default 20)
         in: query
-        name: page
+        name: limit
         type: integer
-      - description: Page size
+      - description: ID of the last item from the previous page (default 0)
+        format: int64
         in: query
-        name: size
+        name: cursor
         type: integer
       produces:
       - application/json
@@ -322,18 +307,16 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Device'
-            type: array
+            $ref: '#/definitions/domain.CursorPageResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/model.ApiError'
+            $ref: '#/definitions/domain.ApiError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/model.ApiError'
-      summary: Fetch devices by state with pagination
+            $ref: '#/definitions/domain.ApiError'
+      summary: Fetch devices by state with cursor pagination
       tags:
-      - Devices API
+      - devices
 swagger: "2.0"
