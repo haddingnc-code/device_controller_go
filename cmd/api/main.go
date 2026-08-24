@@ -2,11 +2,14 @@ package main
 
 import (
 	"devices-api-go/config"
+	_ "devices-api-go/docs" // Blank import to initialize Swagger documentation specs
 	handler "devices-api-go/internal/handler"
 	"devices-api-go/internal/middleware"
 	"devices-api-go/internal/repository"
 	"devices-api-go/internal/service"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"     // Explicit alias for static assets
+	ginSwagger "github.com/swaggo/gin-swagger" // Explicit alias for Gin wrapper
 	"log"
 )
 
@@ -20,13 +23,12 @@ func main() {
 	config.ConnectDatabase()
 
 	// 2. Instantiate the concrete data access layer
-	// Go implicitly maps this structure to the domain.DeviceRepository interface
 	repo := repository.NewDeviceRepository()
 
-	// 3. Instantiate the core business service bound to the interface
+	// 3. Instantiate the core business service
 	coreSvc := service.NewDeviceService(repo)
 
-	// 4. Weaving: Wrap the core service inside our generic AOP validation aspect
+	// 4. Weaving: Wrap the core service inside our AOP validation aspect decorator
 	advisedSvc := service.NewDeviceServiceAspect(coreSvc, repo)
 
 	// 5. Inject the advised service proxy into the HTTP Controller handler
@@ -38,7 +40,10 @@ func main() {
 	// 7. Attach the Global Error Handler Middleware to safely serialize business errors
 	router.Use(middleware.GlobalErrorHandler())
 
-	// 8. Define HTTP Routes directly bound to the validation-protected controller
+	// 8. Expose the Swagger UI Interactive Documentation Route
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// 9. Define HTTP Routes directly bound to the validation-protected controller
 	api := router.Group("/api/v1/devices")
 	{
 		// Public read endpoints (GET)
@@ -56,7 +61,7 @@ func main() {
 		api.DELETE("/:id", ctrl.Delete)
 	}
 
-	// 9. Start the web server on port 8080
+	// 10. Start the web server on port 8080
 	log.Println("Go Devices API with Pure AOP Interface Architecture is running on port 8080...")
 	if err := router.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start the web server: %v", err)

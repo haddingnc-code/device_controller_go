@@ -7,7 +7,7 @@ A high-performance microservice designed in Go 1.23+ for managing device lifecyc
 ## 🛠️ Tech Stack & Key Choices
 
 - **Language:** Go 1.23+ (Statical compilation, fast startup, lightweight footprint).
-- **Pagination:** High-performance Cursor-Based Pagination matching 1GLOBAL scale standards.
+- **Pagination:** High-performance Cursor-Based Pagination designed for high-scale enterprise environments.
 - **Web Framework:** [Gin Gonic](https://github.com) (High-performance routing triage engine).
 - **Database Driver:** [pgx/v5](https://github.com) (Native PostgreSQL connection pool handling with zero reflection overhead).
 - **Database Engine:** PostgreSQL 16 (Relational persistent storage).
@@ -23,11 +23,11 @@ The codebase strictly adheres to a clean, decoupled layer separation mapping arc
 ```text
 devices-api-go/
 ├── cmd/
-│   └── api/      # Application entrypoint (main.go)
+│   └── api/      # Application entrypoint (main.go with AOP weaving)
 ├── config/       # Database connection pool allocation and initialization
 ├── docs/         # Automatically compiled Swagger OpenAPI static definitions
 └── internal/     # Private application layers
-    ├── domain/   # Entities, custom types (pseudo-enums), DTO schemas, and Interfaces
+    ├── domain/   # Entities, custom types, DTO schemas, and Interfaces
     ├── handler/  # REST API HTTP controller handlers (DeviceController)
     ├── middleware/ # Global error mapping interceptors
     ├── repository/ # Database persistence layer (DeviceRepository implementation)
