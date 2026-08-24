@@ -1,6 +1,14 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+// ErrDeviceNotFound is returned by the repository when no device matches the given ID.
+// Using a sentinel error (checked with errors.Is) instead of a string comparison
+// avoids depending on the exact wording of the underlying driver error.
+var ErrDeviceNotFound = errors.New("device not found")
 
 // ApiError defines the standardized JSON structure for all API error responses.
 type ApiError struct {

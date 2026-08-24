@@ -6,7 +6,7 @@ A high-performance microservice designed in Go 1.23+ for managing device lifecyc
 
 ## 🛠️ Tech Stack & Key Choices
 
-- **Language:** Go 1.23+ (Statical compilation, fast startup, lightweight footprint).
+- **Language:** Go 1.27.0 (Statical compilation, fast startup, lightweight footprint).
 - **Pagination:** High-performance Cursor-Based Pagination designed for high-scale enterprise environments.
 - **Web Framework:** [Gin Gonic](https://github.com) (High-performance routing triage engine).
 - **Database Driver:** [pgx/v5](https://github.com) (Native PostgreSQL connection pool handling with zero reflection overhead).
@@ -86,9 +86,25 @@ go test -v ./...
 
 ---
 
+## 🗄️ Database Initialization & Seed Data
+
+The `db/init.sql` script is mounted into the PostgreSQL container at `/docker-entrypoint-initdb.d/init.sql`. Postgres runs it **automatically the first time the container starts with an empty data volume**, so no manual setup step is required:
+
+- Creates the `devices` table (with a `CHECK` constraint restricting `state` to `AVAILABLE`, `IN_USE`, `INACTIVE`, plus indexes on `brand` and `state` to speed up the search endpoints).
+- Seeds it with 6 sample devices across a few brands and states, so the API has data to query immediately after `docker compose up`.
+
+⚠️ Because init scripts only run against a fresh volume, if you already started the stack before this script existed (or want to reset the seed data), recreate the volume:
+
+```bash
+docker compose down --volumes
+docker compose up --build -d
+```
+
+---
+
 ## 🔮 Future Production-Readiness Improvements
 
 Per the structural roadmap of this microservice, the following items outline the architectural enhancements and future scalability improvements:
 
-1. **Database Migrations Engine**: Database schemas are currently handled natively via container initialization scripts. Integrating a tool like `golang-migrate` would allow structural version tracking directly inside the repository pipeline.
+1. **Proper Migrations Engine**: The current `init.sql` approach only runs once, against a fresh volume — it can't evolve the schema on an already-running database. Integrating a tool like `golang-migrate` would allow versioned, repeatable schema changes as part of the deployment pipeline.
 2. **Structured Context Logging & Metrics**: Replacing the standard `log` package with a structured JSON logger like Go's native `slog` would improve log parsing. Exposing a `/metrics` endpoint via Prometheus would enable real-time dashboard observability.

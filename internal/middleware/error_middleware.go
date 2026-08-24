@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -27,8 +28,9 @@ func GlobalErrorHandler() gin.HandlerFunc {
 				message == domain.ErrDeviceInUseLocked ||
 				message == domain.ErrDeviceInUseDelete {
 				status = http.StatusBadRequest
-			} else if message == "Device not found" {
+			} else if errors.Is(err.Err, domain.ErrDeviceNotFound) {
 				status = http.StatusNotFound
+				message = domain.ErrDeviceNotFound.Error()
 			} else if customStatus, exists := err.Meta.(int); exists {
 				status = customStatus
 			}

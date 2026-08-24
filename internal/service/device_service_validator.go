@@ -56,7 +56,9 @@ func (a *DeviceServiceAspect) FullUpdate(ctx context.Context, id int64, dto doma
 
 func (a *DeviceServiceAspect) PartialUpdate(ctx context.Context, id int64, dto map[string]interface{}) (*domain.Device, error) {
 	// Rule: Creation time cannot be updated (Intercept before database load)
-	if _, creationTimeAttempt := dto["creationTime"]; creationTimeAttempt {
+	_, hasCamel := dto["creationTime"]
+	_, hasSnake := dto["creation_time"]
+	if hasCamel || hasSnake {
 		return nil, errors.New(domain.ErrCreationTimeImmutable)
 	}
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"devices-api-go/config"
 	"devices-api-go/internal/domain"
+	"errors"
+	"github.com/jackc/pgx/v5"
 )
 
 // DeviceRepository defines database operations for the Device domain.
@@ -54,6 +56,9 @@ func (r *DeviceRepository) FindByID(ctx context.Context, id int64) (*domain.Devi
 	err := config.DB.QueryRow(ctx, query, id).
 		Scan(&d.ID, &d.Name, &d.Brand, &d.State, &d.CreationTime)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrDeviceNotFound
+		}
 		return nil, err
 	}
 	return &d, nil
